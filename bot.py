@@ -30,11 +30,11 @@ DELETE_COUNTDOWN_SECONDS = int(os.getenv("DELETE_COUNTDOWN_SECONDS", "5") or "5"
 AF_BLUE = 0x1E90FF
 AF_LOGO_URL = os.getenv(
     "AF_LOGO_URL",
-    "https://cdn.discordapp.com/attachments/1430717412944248872/1472312239791931402/af_logo.png"
+    "https://cdn.discordapp.com/attachments/1481773654646849681/1481782741707128983/image.png?ex=69b49137&is=69b33fb7&hm=670861ae8e6c88040d776e5bfd3ac0762bae5c975043b9b55080d1b20d77c2f4&"
 )
 AF_BANNER_URL = os.getenv(
     "AF_BANNER_URL",
-    "https://cdn.discordapp.com/attachments/1430717412944248872/1472312218543456419/af_tickets.png"
+    "https://cdn.discordapp.com/attachments/1481773654646849681/1481782741707128983/image.png?ex=69b49137&is=69b33fb7&hm=670861ae8e6c88040d776e5bfd3ac0762bae5c975043b9b55080d1b20d77c2f4&"
 )
 
 if not DISCORD_TOKEN:
@@ -243,7 +243,7 @@ async def hide_ticket_from_other_staff(channel: discord.TextChannel, claimer: di
 # ============================================================
 def panel_embed() -> discord.Embed:
     e = discord.Embed(
-        title="AF SERVICES Tickets",
+        title=".acc Tickets",
         description=(
             "Do you require assistance with anything? If so,\n"
             "please open a ticket and our support team will answer your queries.\n\n"
@@ -255,10 +255,10 @@ def panel_embed() -> discord.Embed:
         ),
         color=AF_BLUE,
     )
-    e.set_author(name="AF SERVICES Support System", icon_url=AF_LOGO_URL)
+    e.set_author(name=".acc Support System", icon_url=AF_LOGO_URL)
     e.set_thumbnail(url=AF_LOGO_URL)
     e.set_image(url=AF_BANNER_URL)
-    e.set_footer(text="Support Team | AF SERVICES")
+    e.set_footer(text="Support Team | .acc")
     return e
 
 
@@ -288,9 +288,9 @@ def ticket_embed(
         secs = first_staff_seconds % 60
         e.add_field(name="First staff response", value=f"{mins}m {secs}s", inline=False)
 
-    e.set_author(name="AF SERVICES Tickets", icon_url=AF_LOGO_URL)
+    e.set_author(name=".acc Tickets", icon_url=AF_LOGO_URL)
     e.set_thumbnail(url=AF_LOGO_URL)
-    e.set_footer(text=footer_text or "AF SERVICES")
+    e.set_footer(text=footer_text or ".acc")
     return e
 
 
@@ -898,8 +898,8 @@ def compute_status_strings(claimed_by: int | None, tick: int) -> tuple[str, str]
     ]
     state = states[tick % len(states)]
     claimed = "Claimed" if claimed_by else "Unclaimed"
-    footer = f"AF SERVICES • Status: {state} • {claimed}"
-    topic = f"AF SERVICES Ticket | {claimed} | {state}"
+    footer = f".accS • Status: {state} • {claimed}"
+    topic = f".acc Ticket | {claimed} | {state}"
     return footer, topic
 
 
