@@ -30,11 +30,11 @@ DELETE_COUNTDOWN_SECONDS = int(os.getenv("DELETE_COUNTDOWN_SECONDS", "5") or "5"
 AF_BLUE = 0x1E90FF
 AF_LOGO_URL = os.getenv(
     "AF_LOGO_URL",
-    "https://cdn.discordapp.com/attachments/1481773654646849681/1481782741707128983/image.png?ex=69b49137&is=69b33fb7&hm=670861ae8e6c88040d776e5bfd3ac0762bae5c975043b9b55080d1b20d77c2f4&"
+    "https://cdn.discordapp.com/attachments/1430717412944248872/1472312239791931402/af_logo.png"
 )
 AF_BANNER_URL = os.getenv(
     "AF_BANNER_URL",
-    "https://cdn.discordapp.com/attachments/1481773654646849681/1481782741707128983/image.png?ex=69b49137&is=69b33fb7&hm=670861ae8e6c88040d776e5bfd3ac0762bae5c975043b9b55080d1b20d77c2f4&"
+    "https://cdn.discordapp.com/attachments/1430717412944248872/1472312218543456419/af_tickets.png"
 )
 
 if not DISCORD_TOKEN:
@@ -572,7 +572,7 @@ class TicketPanelSelect(discord.ui.Select):
             owner_mention=user.mention,
             claimed_by_mention=None,
             first_staff_seconds=None,
-            footer_text="AF SERVICES • Status: Waiting for staff"
+            footer_text=".acc • Status: Waiting for staff"
         )
         msg = await channel.send(content=user.mention, embed=embed, view=TicketControlView(channel.id))
 
@@ -603,7 +603,7 @@ def staff_only():
     return app_commands.check(predicate)
 
 
-@bot.tree.command(name="ticket_panel", description="Post the AF SERVICES ticket panel.")
+@bot.tree.command(name="ticket_panel", description="Post the .acc ticket panel.")
 @staff_only()
 async def ticket_panel(interaction: discord.Interaction):
     await interaction.response.send_message(embed=panel_embed(), view=TicketPanelView())
@@ -732,7 +732,7 @@ async def ticket_stats(interaction: discord.Interaction):
     avg_seconds = avg_resp["avg_first_response"]
     avg_text = "N/A" if avg_seconds is None else f"{int(avg_seconds) // 60}m {int(avg_seconds) % 60}s"
 
-    e = discord.Embed(title="AF SERVICES • Ticket Stats", color=AF_BLUE)
+    e = discord.Embed(title=".acc • Ticket Stats", color=AF_BLUE)
     e.set_thumbnail(url=AF_LOGO_URL)
     e.add_field(name="Total tickets", value=str(totals["total"]), inline=True)
     e.add_field(name="Open", value=str(totals["open"] or 0), inline=True)
@@ -771,7 +771,7 @@ async def refresh_ticket_control_message(channel: discord.TextChannel):
         claimer = channel.guild.get_member(int(row["claimed_by"]))
         claimed_by_mention = claimer.mention if claimer else f"<@{int(row['claimed_by'])}>"
 
-    footer_text = row["last_footer_text"] or "AF SERVICES"
+    footer_text = row["last_footer_text"] or ".acc"
     embed = ticket_embed(
         kind=str(row["kind"]),
         owner_mention=owner_mention,
@@ -893,12 +893,12 @@ def compute_status_strings(claimed_by: int | None, tick: int) -> tuple[str, str]
     states = [
         "Waiting for staff",
         "Processing",
-        "AF SERVICES Support",
+        ".acc Support",
         "Please provide details",
     ]
     state = states[tick % len(states)]
     claimed = "Claimed" if claimed_by else "Unclaimed"
-    footer = f".accS • Status: {state} • {claimed}"
+    footer = f".acc • Status: {state} • {claimed}"
     topic = f".acc Ticket | {claimed} | {state}"
     return footer, topic
 
