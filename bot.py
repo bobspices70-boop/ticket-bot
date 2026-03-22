@@ -30,11 +30,11 @@ DELETE_COUNTDOWN_SECONDS = int(os.getenv("DELETE_COUNTDOWN_SECONDS", "5") or "5"
 AF_BLUE = 0x1E90FF
 AF_LOGO_URL = os.getenv(
     "AF_LOGO_URL",
-    "https://cdn.discordapp.com/attachments/1430717412944248872/1472312239791931402/af_logo.png"
+    "https://media.discordapp.net/attachments/1485009054358310954/1485247724449435798/af_logo_black.png?ex=69c12c3c&is=69bfdabc&hm=a00500d4932df6df2e2f960405b2e8e3cac8d8620bfe52283a4f83b1727d8967&=&format=webp&quality=lossless&width=960&height=960"
 )
 AF_BANNER_URL = os.getenv(
     "AF_BANNER_URL",
-    "https://cdn.discordapp.com/attachments/1430717412944248872/1472312218543456419/af_tickets.png"
+    "https://media.discordapp.net/attachments/1485009054358310954/1485247745563558059/accsforge_banner.png?ex=69c12c41&is=69bfdac1&hm=74c559f9f2c9acf9acde3e846609d21847904197fb2f00739e67a4928c188372&=&format=webp&quality=lossless&width=1376&height=917"
 )
 
 if not DISCORD_TOKEN:
@@ -43,7 +43,6 @@ if not DATABASE_URL:
     raise RuntimeError("Missing DATABASE_URL")
 if not GUILD_ID:
     raise RuntimeError("Missing GUILD_ID")
-
 
 # ============================================================
 # DISCORD BOT
@@ -54,9 +53,8 @@ intents.messages = True
 intents.message_content = True
 intents.members = True
 
-bot = commands.Bot(command_prefix="!", intents=intents)
-
 db_pool: asyncpg.Pool | None = None
+GUILD_OBJ = discord.Object(id=GUILD_ID)
 
 
 # ============================================================
@@ -211,7 +209,7 @@ async def get_log_channel(guild: discord.Guild) -> discord.TextChannel | None:
 
 
 def make_channel_name(kind: str, owner: discord.abc.User, num: int) -> str:
-    return f"{kind_emoji(kind)}-{kind_prefix(kind)}-{safe_name(owner.name)}-{num:04d}"
+    return f"{kind_prefix(kind)}-{safe_name(owner.name)}-{num:04d}"
 
 
 def sanitize_channel_rename(text: str) -> str:
@@ -243,15 +241,15 @@ async def hide_ticket_from_other_staff(channel: discord.TextChannel, claimer: di
 # ============================================================
 def panel_embed() -> discord.Embed:
     e = discord.Embed(
-        title="AccsForgee Tickets",
+        title="AccsForge Tickets",
         description=(
-            "Do you require assistance with anything? If so,\n"
-            "please open a ticket and our support team will answer your queries.\n\n"
+            "Do you need help with something?\n"
+            "Open a ticket and our support team will answer.\n\n"
             "**What can we help with?**\n"
             "• Claim Order\n"
             "• Custom Order\n"
             "• Issues/Help\n\n"
-            "Please be precise and straight forward with your query."
+            "Please be clear and direct with your request."
         ),
         color=AF_BLUE,
     )
@@ -593,6 +591,38 @@ class TicketPanelView(discord.ui.View):
 
 
 # ============================================================
+# BOT CLASS
+# ============================================================
+class TicketBot(commands.Bot):
+    async def setup_hook(self):
+        await ensure_db()
+
+        self.add_view(TicketPanelView())
+
+        rows = await db_fetch(
+            "SELECT channel_id, control_message_id FROM tickets WHERE guild_id=$1 AND status='open' AND control_message_id IS NOT NULL",
+            GUILD_ID
+        )
+        for r in rows:
+            try:
+                self.add_view(
+                    TicketControlView(int(r["channel_id"])),
+                    message_id=int(r["control_message_id"])
+                )
+            except Exception as e:
+                print(f"Persistent view restore failed: {e}")
+
+        try:
+            synced = await self.tree.sync(guild=GUILD_OBJ)
+            print(f"Synced {len(synced)} guild command(s) to {GUILD_ID}")
+        except Exception as e:
+            print("Command sync error:", e)
+
+
+bot = TicketBot(command_prefix="!", intents=intents)
+
+
+# ============================================================
 # STAFF CHECK + COMMANDS
 # ============================================================
 def staff_only():
@@ -603,13 +633,13 @@ def staff_only():
     return app_commands.check(predicate)
 
 
-@bot.tree.command(name="ticket_panel", description="Post the AccsForge ticket panel.")
+@bot.tree.command(name="ticket_panel", description="Post the AccsForge ticket panel.", guild=GUILD_OBJ)
 @staff_only()
 async def ticket_panel(interaction: discord.Interaction):
     await interaction.response.send_message(embed=panel_embed(), view=TicketPanelView())
 
 
-@bot.tree.command(name="close", description="Close the current ticket.")
+@bot.tree.command(name="close", description="Close the current ticket.", guild=GUILD_OBJ)
 @staff_only()
 @app_commands.describe(reason="Reason for closing this ticket")
 async def close_command(interaction: discord.Interaction, reason: str):
@@ -629,7 +659,7 @@ async def close_command(interaction: discord.Interaction, reason: str):
     )
 
 
-@bot.tree.command(name="rename", description="Rename the current ticket channel.")
+@bot.tree.command(name="rename", description="Rename the current ticket channel.", guild=GUILD_OBJ)
 @staff_only()
 @app_commands.describe(text="New channel name")
 async def rename_command(interaction: discord.Interaction, text: str):
@@ -649,7 +679,7 @@ async def rename_command(interaction: discord.Interaction, text: str):
         await interaction.response.send_message(f"Rename failed: {e}", ephemeral=True)
 
 
-@bot.tree.command(name="purge", description="Close tickets in bulk.")
+@bot.tree.command(name="purge", description="Close tickets in bulk.", guild=GUILD_OBJ)
 @staff_only()
 @app_commands.describe(target="Use 'all' to close all open tickets")
 @app_commands.choices(target=[app_commands.Choice(name="all", value="all")])
@@ -686,7 +716,7 @@ async def purge_command(interaction: discord.Interaction, target: app_commands.C
                 print(f"Failed to purge channel {ch.id}: {e}")
 
 
-@bot.tree.command(name="ticket_stats", description="Show ticket stats overview (server).")
+@bot.tree.command(name="ticket_stats", description="Show ticket stats overview (server).", guild=GUILD_OBJ)
 @staff_only()
 async def ticket_stats(interaction: discord.Interaction):
     guild = interaction.guild
@@ -945,27 +975,6 @@ async def status_rotator():
 # ============================================================
 @bot.event
 async def on_ready():
-    await ensure_db()
-
-    try:
-        gobj = discord.Object(id=GUILD_ID)
-        bot.tree.copy_global_to(guild=gobj)
-        await bot.tree.sync(guild=gobj)
-    except Exception as e:
-        print("Command sync error:", e)
-
-    bot.add_view(TicketPanelView())
-
-    rows = await db_fetch(
-        "SELECT channel_id, control_message_id FROM tickets WHERE guild_id=$1 AND status='open' AND control_message_id IS NOT NULL",
-        GUILD_ID
-    )
-    for r in rows:
-        try:
-            bot.add_view(TicketControlView(int(r["channel_id"])), message_id=int(r["control_message_id"]))
-        except Exception:
-            pass
-
     if not status_rotator.is_running():
         status_rotator.start()
 
