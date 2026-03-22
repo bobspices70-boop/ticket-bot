@@ -243,7 +243,7 @@ async def hide_ticket_from_other_staff(channel: discord.TextChannel, claimer: di
 # ============================================================
 def panel_embed() -> discord.Embed:
     e = discord.Embed(
-        title=".acc Tickets",
+        title="AccsForgee Tickets",
         description=(
             "Do you require assistance with anything? If so,\n"
             "please open a ticket and our support team will answer your queries.\n\n"
@@ -255,10 +255,10 @@ def panel_embed() -> discord.Embed:
         ),
         color=AF_BLUE,
     )
-    e.set_author(name=".acc Support System", icon_url=AF_LOGO_URL)
+    e.set_author(name="AccsForge Support System", icon_url=AF_LOGO_URL)
     e.set_thumbnail(url=AF_LOGO_URL)
     e.set_image(url=AF_BANNER_URL)
-    e.set_footer(text="Support Team | .acc")
+    e.set_footer(text="Support Team | AccsForge")
     return e
 
 
@@ -288,9 +288,9 @@ def ticket_embed(
         secs = first_staff_seconds % 60
         e.add_field(name="First staff response", value=f"{mins}m {secs}s", inline=False)
 
-    e.set_author(name=".acc Tickets", icon_url=AF_LOGO_URL)
+    e.set_author(name="AccsForge Tickets", icon_url=AF_LOGO_URL)
     e.set_thumbnail(url=AF_LOGO_URL)
-    e.set_footer(text=footer_text or ".acc")
+    e.set_footer(text=footer_text or "AccsForge")
     return e
 
 
@@ -572,7 +572,7 @@ class TicketPanelSelect(discord.ui.Select):
             owner_mention=user.mention,
             claimed_by_mention=None,
             first_staff_seconds=None,
-            footer_text=".acc • Status: Waiting for staff"
+            footer_text="AccsForge • Status: Waiting for staff"
         )
         msg = await channel.send(content=user.mention, embed=embed, view=TicketControlView(channel.id))
 
@@ -603,7 +603,7 @@ def staff_only():
     return app_commands.check(predicate)
 
 
-@bot.tree.command(name="ticket_panel", description="Post the .acc ticket panel.")
+@bot.tree.command(name="ticket_panel", description="Post the AccsForge ticket panel.")
 @staff_only()
 async def ticket_panel(interaction: discord.Interaction):
     await interaction.response.send_message(embed=panel_embed(), view=TicketPanelView())
@@ -732,7 +732,7 @@ async def ticket_stats(interaction: discord.Interaction):
     avg_seconds = avg_resp["avg_first_response"]
     avg_text = "N/A" if avg_seconds is None else f"{int(avg_seconds) // 60}m {int(avg_seconds) % 60}s"
 
-    e = discord.Embed(title=".acc • Ticket Stats", color=AF_BLUE)
+    e = discord.Embed(title="AccsForge • Ticket Stats", color=AF_BLUE)
     e.set_thumbnail(url=AF_LOGO_URL)
     e.add_field(name="Total tickets", value=str(totals["total"]), inline=True)
     e.add_field(name="Open", value=str(totals["open"] or 0), inline=True)
@@ -771,7 +771,7 @@ async def refresh_ticket_control_message(channel: discord.TextChannel):
         claimer = channel.guild.get_member(int(row["claimed_by"]))
         claimed_by_mention = claimer.mention if claimer else f"<@{int(row['claimed_by'])}>"
 
-    footer_text = row["last_footer_text"] or ".acc"
+    footer_text = row["last_footer_text"] or "AccsForge"
     embed = ticket_embed(
         kind=str(row["kind"]),
         owner_mention=owner_mention,
@@ -893,13 +893,13 @@ def compute_status_strings(claimed_by: int | None, tick: int) -> tuple[str, str]
     states = [
         "Waiting for staff",
         "Processing",
-        ".acc Support",
+        "AccsForge Support",
         "Please provide details",
     ]
     state = states[tick % len(states)]
     claimed = "Claimed" if claimed_by else "Unclaimed"
-    footer = f".acc • Status: {state} • {claimed}"
-    topic = f".acc Ticket | {claimed} | {state}"
+    footer = f"AccsForge • Status: {state} • {claimed}"
+    topic = f"AccsForge Ticket | {claimed} | {state}"
     return footer, topic
 
 
